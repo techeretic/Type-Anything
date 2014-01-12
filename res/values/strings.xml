@@ -7,5 +7,8 @@
     <string name="type_hint">Just Type</string>
     <string name="save_note">Save</string>
     <string name="manage_notes">Manage Note</string>
+    <string name="str_btn_del">Delete</string>
+    <string name="str_btn_canc">Cancel</string>
+    <string name="str_delete_pop">Delete the note??</string>
 
 </resources>

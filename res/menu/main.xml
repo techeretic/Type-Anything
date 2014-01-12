@@ -11,7 +11,16 @@
         android:id="@+id/action_Edit"
         android:orderInCategory="100"
         android:showAsAction="always"
+        android:visible="false"
         android:icon="@drawable/ic_menu_edit"
+        android:title="@string/save_note"/>
+    
+    <item
+        android:id="@+id/action_Delete"
+        android:orderInCategory="100"
+        android:showAsAction="always"
+        android:visible="false"
+        android:icon="@drawable/ic_menu_delete"
         android:title="@string/save_note"/>
     <!-- 
     <item

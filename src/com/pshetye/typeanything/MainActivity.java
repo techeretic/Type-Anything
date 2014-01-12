@@ -1,10 +1,10 @@
 package com.pshetye.typeanything;
 
-import java.util.HashMap;
 import java.util.List;
 
 import android.app.Activity;
-import android.content.Context;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,7 +23,13 @@ public class MainActivity extends Activity {
 	EditText et_Note;
 	ListView listview;
 	Toast t;
-	public static int notes;
+	MenuItem act_Save, act_Edit, act_Delt;
+	public static int notes;	
+	public static int note_pos;
+	
+	public static boolean EDIT_MODE;
+	public static boolean doDelete;
+	public static boolean selected;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,27 +37,42 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         
         db = new DatabaseHelper(this);
-        
-        listview = (ListView) findViewById(R.id.listview);
+
+		et_Note = (EditText) findViewById(R.id.et_Note);
+        listview = (ListView) findViewById(R.id.list);
         
         refreshNotes();
         
         listview.setOnItemClickListener(new OnItemClickListener() {
         	  @Override
-        	  public void onItemClick(AdapterView<?> parent, View view,
-        	    int position, long id) {
-        	    Toast.makeText(getApplicationContext(),
-        	      "Click ListItem Number " + position, Toast.LENGTH_LONG)
-        	      .show();
+        	  public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        		  note_pos = position;
+        		  act_Edit.setVisible(true);
+        		  act_Delt.setVisible(true);
+        		  selected = true;
         	  }
-        	}); 
+        });
     }
-
+    
+    public void onBackPressed(){
+    	if (selected) {
+    		act_Edit.setVisible(false);
+  		  	act_Delt.setVisible(false);
+  		  	refreshNotes();
+  		  	selected = false;
+    	} else {
+    		moveTaskToBack(true);
+    	}
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+
+        act_Edit = menu.findItem(R.id.action_Edit);
+        act_Delt = menu.findItem(R.id.action_Delete);
+        
         return true;
     }
     
@@ -59,55 +80,68 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
 	    	case R.id.action_save:
-	    		et_Note = (EditText) findViewById(R.id.et_Note);
-	    		if (et_Note.getText().toString().isEmpty()) {
-	    			if (t != null)
-	    				t.cancel();
-	    			t = Toast.makeText(this, "Please type something", Toast.LENGTH_SHORT);
-	    			t.show();
-	    			break;
+	    		if (EDIT_MODE) {	    			
+	    			if (et_Note.getText().toString().isEmpty()) {
+	    				showToast("Please type something");
+		    			break;
+		    		}
+	    			db.updateNote(new MyNote(note_pos + 1, et_Note.getText().toString()));
+	    			EDIT_MODE = false;
+	    		} else {
+		    		if (et_Note.getText().toString().isEmpty()) {
+		    			showToast("Please type something");
+		    			break;
+		    		}
+		    		notes = db.getNotesCount();
+		    		note = new MyNote(notes+1, et_Note.getText().toString());
+		    		db.addNote(note);
 	    		}
-	    		notes = db.getNotesCount();
-	    		note = new MyNote(notes+1, et_Note.getText().toString());
-	    		db.addNote(note);
-	    		Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show();
-	    		et_Note.setText("");
+	    		showToast("Saved");
+		    	et_Note.setText("");
 	    		refreshNotes();
+	    		act_Edit.setVisible(false);
+      		  	act_Delt.setVisible(false);
+	    		break;
+	    	case R.id.action_Edit:
+      		    EDIT_MODE = true;
+      		    et_Note.setText(db.getNote(note_pos + 1).getNote());
+	    		refreshNotes();
+	    		break;
+	    	case R.id.action_Delete:
+	    		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+	    		alert.setMessage(R.string.str_delete_pop);
+	    		alert.setPositiveButton(R.string.str_btn_del, new DialogInterface.OnClickListener() {
+	    			public void onClick(DialogInterface dialog, int whichButton) {
+	    				db.deleteNote(new MyNote(note_pos+1,et_Note.getText().toString()));
+	    				refreshNotes();
+	    	    		act_Edit.setVisible(false);
+	          		  	act_Delt.setVisible(false);
+	    			}
+	    		});
+	    		alert.setNegativeButton(R.string.str_btn_canc, new DialogInterface.OnClickListener() {
+	    			public void onClick(DialogInterface dialog, int whichButton) {
+	    				refreshNotes();
+	    			}
+	    		});
+	    		alert.show();
 	    		break;
     	}
     	return true;
     }
     
-    public void refreshNotes() {
+    private void refreshNotes() {
     	List<String> list = db.getAllStringNotes();
-        
-        final StableArrayAdapter adapter = new StableArrayAdapter(this,
-                android.R.layout.simple_list_item_1, list);
-        listview.setAdapter(adapter);
+    	
+    	ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+    	        android.R.layout.simple_list_item_activated_1, list);
+    	listview.setAdapter(adapter);
+    	listview.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
     }
     
-    private class StableArrayAdapter extends ArrayAdapter<String> {
-
-		HashMap<String, Integer> mIdMap = new HashMap<String, Integer>();
-
-		public StableArrayAdapter(Context context, int textViewResourceId,
-				List<String> objects) {
-			super(context, textViewResourceId, objects);
-			for (int i = 0; i < objects.size(); ++i) {
-				mIdMap.put(objects.get(i), i);
-			}
-		}
-
-		@Override
-		public long getItemId(int position) {
-			String item = getItem(position);
-			return mIdMap.get(item);
-		}
-
-		@Override
-		public boolean hasStableIds() {
-			return true;
-		}
-
-	}
+    private void showToast(String ToastText){
+    	if (t != null)
+			t.cancel();
+		t = Toast.makeText(this, ToastText, Toast.LENGTH_SHORT);
+		t.show();
+    }
 }
