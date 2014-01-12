@@ -1,0 +1,149 @@
+package com.pshetye.typeanything;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabase.CursorFactory;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DatabaseHelper extends SQLiteOpenHelper {
+	
+	private static final int DATABASE_VERSION = 1;
+	 
+    // Database Name
+    private static final String DATABASE_NAME = "MyNotes";
+ 
+    // Contacts table name
+    private static final String MYNOTES = "MyNote";
+ 
+    // Contacts Table Columns names
+    private static final String KEY_ID = "id";
+    private static final String KEY_NOTE = "pNote";
+
+	public DatabaseHelper(Context context){
+		super(context, DATABASE_NAME, null, DATABASE_VERSION);
+		// TODO Auto-generated constructor stub
+	}
+
+	public DatabaseHelper(Context context, String name, CursorFactory factory,
+			int version) {
+		super(context, DATABASE_NAME, factory, DATABASE_VERSION);
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	public void onCreate(SQLiteDatabase db) {
+		String CREATE_CONTACTS_TABLE = "CREATE TABLE " + MYNOTES + "("
+                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NOTE + " TEXT" + ")";
+        db.execSQL(CREATE_CONTACTS_TABLE);
+	}
+
+	@Override
+	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+		// TODO Auto-generated method stub
+		System.out.print("Inside onUpgrade in DatabaseHelper");
+	}
+
+	// Adding new contact
+	public void addNote(MyNote note) {
+		SQLiteDatabase db = this.getWritableDatabase();
+		 
+	    ContentValues values = new ContentValues();
+	    values.put(KEY_NOTE, note.getNote()); // Contact Name
+	 
+	    // Inserting Row
+	    db.insert(MYNOTES, null, values);
+	    db.close(); // Closing database connection		
+	}
+	 
+	// Getting single contact
+	public MyNote getNote(int _id) {
+		SQLiteDatabase db = this.getReadableDatabase();
+		 
+	    Cursor cursor = db.query(MYNOTES, new String[] { KEY_ID,
+	            KEY_NOTE }, KEY_ID + "=?",
+	            new String[] { String.valueOf(_id) }, null, null, null, null);
+	    if (cursor != null)
+	        cursor.moveToFirst();
+	 
+	    MyNote note = new MyNote(Integer.parseInt(cursor.getString(0)), cursor.getString(1));
+	    // return Note
+	    return note;
+	}
+	 
+	// Getting All Contacts
+	public List<MyNote> getAllNotes() {
+		SQLiteDatabase db = this.getReadableDatabase();
+		List<MyNote> noteList = new ArrayList<MyNote>();
+		String selectQuery = "SELECT  * FROM " + MYNOTES;
+		
+		Cursor cursor = db.rawQuery(selectQuery, null);
+		
+		// looping through all rows and adding to list
+	    if (cursor.moveToFirst()) {
+	        do {
+	            MyNote note = new MyNote();
+	            note.setID(Integer.parseInt(cursor.getString(0)));
+	            note.setPNote(cursor.getString(1));
+	            // Adding contact to list
+	            noteList.add(note);
+	        } while (cursor.moveToNext());
+	    }
+	 
+	    // return contact list
+	    return noteList;
+	}
+	
+	// Getting All Contacts
+	public List<String> getAllStringNotes() {
+		SQLiteDatabase db = this.getReadableDatabase();
+		List<String> noteList = new ArrayList<String>();
+		String selectQuery = "SELECT  * FROM " + MYNOTES + " ORDER BY " + KEY_ID + " DESC";
+		
+		Cursor cursor = db.rawQuery(selectQuery, null);
+		
+		// looping through all rows and adding to list
+	    if (cursor.moveToFirst()) {
+	        do {
+	            // Adding contact to list
+	            noteList.add(cursor.getString(1));
+	        } while (cursor.moveToNext());
+	    }
+	    // return contact list
+	    return noteList;
+	}
+	 
+	// Getting contacts Count
+	public int getNotesCount() {
+		SQLiteDatabase db = this.getReadableDatabase();
+		String selectQuery = "SELECT * FROM " + MYNOTES;
+		
+		Cursor cursor = db.rawQuery(selectQuery, null);
+		
+		return cursor.getCount();
+	}
+	
+	// Updating single contact
+	public int updateNote(MyNote note) {
+		SQLiteDatabase db = this.getWritableDatabase();
+		 
+	    ContentValues values = new ContentValues();
+	    values.put(KEY_NOTE, note.getNote());
+	 
+	    // updating row
+	    return db.update(MYNOTES, values, KEY_ID + " = ?",
+	            new String[] { String.valueOf(note.getID()) });
+	}
+	 
+	// Deleting single contact
+	public void deleteNote(MyNote note) {
+		SQLiteDatabase db = this.getWritableDatabase();
+	    db.delete(MYNOTES, KEY_ID + " = ?",
+	            new String[] { String.valueOf(note.getID()) });
+	    db.close();
+	}
+}
