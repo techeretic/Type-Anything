@@ -10,5 +10,7 @@
     <string name="str_btn_del">Delete</string>
     <string name="str_btn_canc">Cancel</string>
     <string name="str_delete_pop">Delete the note??</string>
+    <string name="str_back_pop">Changes present, do you want to save?</string>
+    <string name="str_btn_save">Save</string>
 
 </resources>

@@ -23,6 +23,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Contacts Table Columns names
     private static final String KEY_ID = "id";
     private static final String KEY_NOTE = "pNote";
+    
+    private static int notes;
 
 	public DatabaseHelper(Context context){
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -106,6 +108,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		
 		Cursor cursor = db.rawQuery(selectQuery, null);
 		
+		notes = cursor.getCount();
+		
 		// looping through all rows and adding to list
 	    if (cursor.moveToFirst()) {
 	        do {
@@ -144,6 +148,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		SQLiteDatabase db = this.getWritableDatabase();
 	    db.delete(MYNOTES, KEY_ID + " = ?",
 	            new String[] { String.valueOf(note.getID()) });
+	    if (note.getID() != 0 && note.getID() < notes) {
+	    	
+	    }
 	    db.close();
 	}
 }

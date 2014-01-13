@@ -47,8 +47,10 @@ public final class R {
         public static final int hello_world=0x7f050002;
         public static final int manage_notes=0x7f050005;
         public static final int save_note=0x7f050004;
+        public static final int str_back_pop=0x7f050009;
         public static final int str_btn_canc=0x7f050007;
         public static final int str_btn_del=0x7f050006;
+        public static final int str_btn_save=0x7f05000a;
         public static final int str_delete_pop=0x7f050008;
         public static final int type_hint=0x7f050003;
     }

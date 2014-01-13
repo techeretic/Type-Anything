@@ -25,7 +25,8 @@ public class MainActivity extends Activity {
 	Toast t;
 	MenuItem act_Save, act_Edit, act_Delt;
 	public static int notes;	
-	public static int note_pos;
+	public static int note_pos, orig_pos;
+	List<MyNote> mynotes;
 	
 	public static boolean EDIT_MODE;
 	public static boolean doDelete;
@@ -46,12 +47,22 @@ public class MainActivity extends Activity {
         listview.setOnItemClickListener(new OnItemClickListener() {
         	  @Override
         	  public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        		  note_pos = position;
+        		  note_pos = orig_pos = position;
         		  act_Edit.setVisible(true);
         		  act_Delt.setVisible(true);
         		  selected = true;
+        		  et_Note.setFocusableInTouchMode(false);
         	  }
         });
+    }
+    
+    public void onPause() {
+    	super.onPause();
+		this.finish();
+    }
+    
+    public void onFinish() {
+		db.close();
     }
     
     public void onBackPressed(){
@@ -61,7 +72,34 @@ public class MainActivity extends Activity {
   		  	refreshNotes();
   		  	selected = false;
     	} else {
-    		moveTaskToBack(true);
+    		if (EDIT_MODE) {
+    			if (!et_Note.getText().toString().equals(mynotes.get(orig_pos).getNote()) && 
+    					!et_Note.getText().toString().isEmpty()) {
+    				AlertDialog.Builder alert = new AlertDialog.Builder(this);
+    	    		alert.setMessage(R.string.str_back_pop);
+    	    		alert.setPositiveButton(R.string.str_btn_save, new DialogInterface.OnClickListener() {
+    	    			public void onClick(DialogInterface dialog, int whichButton) {
+    	    				if (et_Note.getText().toString().isEmpty()) {
+    		    				showToast("Please type something");
+    			    			return;
+    			    		}
+    		    			db.updateNote(new MyNote(note_pos, et_Note.getText().toString()));
+    		    			moveTaskToBack(true);
+    	    			}
+    	    		});
+    	    		alert.setNegativeButton(R.string.str_btn_canc, new DialogInterface.OnClickListener() {
+    	    			public void onClick(DialogInterface dialog, int whichButton) {
+    	    				moveTaskToBack(true);
+    	    			}
+    	    		});
+    	    		alert.show();
+    				EDIT_MODE = false;
+    			} else {
+        			moveTaskToBack(true);
+        		}
+    		} else {
+    			moveTaskToBack(true);
+    		}
     	}
     }
 
@@ -80,16 +118,34 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
 	    	case R.id.action_save:
+	    		if (selected && !EDIT_MODE && !et_Note.getText().toString().isEmpty()) {
+	    			showToast("Nothing to save");
+	    			refreshNotes();
+	    			selected = false;
+	    			et_Note.setFocusableInTouchMode(true);
+	    			break;
+	    		}
 	    		if (EDIT_MODE) {	    			
 	    			if (et_Note.getText().toString().isEmpty()) {
 	    				showToast("Please type something");
+	    				et_Note.setFocusableInTouchMode(true);
 		    			break;
 		    		}
-	    			db.updateNote(new MyNote(note_pos + 1, et_Note.getText().toString()));
+	    			//note_pos = mynotes.get(note_pos).getID();
+	    			if (et_Note.getText().toString().equals(mynotes.get(orig_pos).getNote())) {
+	    				showToast("Nothing has changed");
+	    				refreshNotes();
+	    				et_Note.setText("");
+	    				EDIT_MODE = false;
+	    				et_Note.setFocusableInTouchMode(true);
+	    				break;
+	    			}
+	    			db.updateNote(new MyNote(note_pos, et_Note.getText().toString()));
 	    			EDIT_MODE = false;
 	    		} else {
 		    		if (et_Note.getText().toString().isEmpty()) {
 		    			showToast("Please type something");
+		    			et_Note.setFocusableInTouchMode(true);
 		    			break;
 		    		}
 		    		notes = db.getNotesCount();
@@ -101,18 +157,24 @@ public class MainActivity extends Activity {
 	    		refreshNotes();
 	    		act_Edit.setVisible(false);
       		  	act_Delt.setVisible(false);
+      		  	selected = false;
+      		  	et_Note.setFocusableInTouchMode(true);
 	    		break;
 	    	case R.id.action_Edit:
       		    EDIT_MODE = true;
-      		    et_Note.setText(db.getNote(note_pos + 1).getNote());
+    			note_pos = mynotes.get(note_pos).getID();
+      		    et_Note.setText(db.getNote(note_pos).getNote());
 	    		refreshNotes();
+	    		selected = false;
+	    		et_Note.setFocusableInTouchMode(true);
 	    		break;
 	    	case R.id.action_Delete:
 	    		AlertDialog.Builder alert = new AlertDialog.Builder(this);
 	    		alert.setMessage(R.string.str_delete_pop);
 	    		alert.setPositiveButton(R.string.str_btn_del, new DialogInterface.OnClickListener() {
 	    			public void onClick(DialogInterface dialog, int whichButton) {
-	    				db.deleteNote(new MyNote(note_pos+1,et_Note.getText().toString()));
+	    				note_pos = mynotes.get(note_pos).getID();
+	    				db.deleteNote(new MyNote(note_pos,et_Note.getText().toString()));
 	    				refreshNotes();
 	    	    		act_Edit.setVisible(false);
 	          		  	act_Delt.setVisible(false);
@@ -131,6 +193,8 @@ public class MainActivity extends Activity {
     
     private void refreshNotes() {
     	List<String> list = db.getAllStringNotes();
+    	
+    	mynotes = db.getAllNotes();
     	
     	ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
     	        android.R.layout.simple_list_item_activated_1, list);
