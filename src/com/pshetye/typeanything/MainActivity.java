@@ -4,11 +4,14 @@ import java.util.List;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
@@ -18,19 +21,20 @@ import android.widget.Toast;
 
 public class MainActivity extends Activity {
 	
+	AlertDialog.Builder alert;
 	DatabaseHelper db;
 	MyNote note;
 	EditText et_Note;
 	ListView listview;
 	Toast t;
 	MenuItem act_Save, act_Edit, act_Delt;
-	public static int notes;	
-	public static int note_pos, orig_pos;
+	public static int orig_pos;
+	public static long old_pos, note_pos;
+	public static enum app_states{VIEW, EDIT, DELETE, NEW, SELECTED};
+	public static app_states app_state;
 	List<MyNote> mynotes;
 	
-	public static boolean EDIT_MODE;
 	public static boolean doDelete;
-	public static boolean selected;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,16 +45,77 @@ public class MainActivity extends Activity {
 
 		et_Note = (EditText) findViewById(R.id.et_Note);
         listview = (ListView) findViewById(R.id.list);
+        app_state = app_states.VIEW;
         
         refreshNotes();
+        
+        et_Note.setOnTouchListener(new View.OnTouchListener() {			
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				if (app_state != app_states.EDIT)
+					app_state = app_states.NEW;
+				return false;
+			}
+		});
         
         listview.setOnItemClickListener(new OnItemClickListener() {
         	  @Override
         	  public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        		  note_pos = orig_pos = position;
+	        	  orig_pos = position;
+        		  if (app_state == app_states.NEW && !et_Note.getText().toString().isEmpty()) {
+        			  alert = new AlertDialog.Builder(MainActivity.this);
+        			  alert.setMessage(R.string.str_new_pop);
+      				  alert.setPositiveButton(R.string.str_btn_save, new DialogInterface.OnClickListener() {
+      					  public void onClick(DialogInterface dialog, int whichButton) {
+      						  note = new MyNote(System.currentTimeMillis(), et_Note.getText().toString());
+      						  db.addNote(note);
+      						  showToast("Saved");
+      						  et_Note.setText("");
+      						  refreshNotes();
+      		        		  note_pos = mynotes.get(orig_pos).getID();
+      					  }
+      				  });
+      				  alert.setNegativeButton(R.string.str_btn_canc, new DialogInterface.OnClickListener() {
+      					  public void onClick(DialogInterface dialog, int whichButton) {
+      		        		  note_pos = mynotes.get(orig_pos).getID();  
+      						  et_Note.setText("");
+      						  refreshNotes();    						  
+      					  }
+      				  });
+      				  alert.show();
+        		  } else 
+        		  if (app_state == app_states.EDIT) {   			
+        			  if (et_Note.getText().toString().isEmpty()) {
+        				  showToast("Please type something");
+	    				  et_Note.setFocusableInTouchMode(true);
+        			  } else {
+	        			  alert = new AlertDialog.Builder(MainActivity.this);
+	        			  alert.setMessage(R.string.str_new_pop);
+	      				  alert.setPositiveButton(R.string.str_btn_save, new DialogInterface.OnClickListener() {
+	      					  public void onClick(DialogInterface dialog, int whichButton) {
+	      						  db.updateNote(new MyNote(note_pos, et_Note.getText().toString()));
+	      						  showToast("Updated");
+	      						  et_Note.setText("");
+	      						  refreshNotes();
+	      		        		  note_pos = mynotes.get(orig_pos).getID();
+	      					  }
+	      				  });
+	      				  alert.setNegativeButton(R.string.str_btn_canc, new DialogInterface.OnClickListener() {
+	      					  public void onClick(DialogInterface dialog, int whichButton) {
+	      		        		  note_pos = mynotes.get(orig_pos).getID();  
+	      						  et_Note.setText("");
+	      						  refreshNotes();    						  
+	      					  }
+	      				  });
+	      				  alert.show(); 
+        			  }
+        		  } else {
+        			  app_state = app_states.SELECTED;
+        			  hideSoftKeyboard(MainActivity.this, view);
+        			  note_pos = mynotes.get(orig_pos).getID();
+        		  }
         		  act_Edit.setVisible(true);
         		  act_Delt.setVisible(true);
-        		  selected = true;
         		  et_Note.setFocusableInTouchMode(false);
         	  }
         });
@@ -66,24 +131,21 @@ public class MainActivity extends Activity {
     }
     
     public void onBackPressed(){
-    	if (selected) {
+    	if (app_state == app_states.SELECTED) {
     		act_Edit.setVisible(false);
   		  	act_Delt.setVisible(false);
   		  	refreshNotes();
-  		  	selected = false;
+  		  	app_state = app_states.VIEW;
+  		  	et_Note.setFocusableInTouchMode(true);
     	} else {
-    		if (EDIT_MODE) {
+    		if (app_state == app_states.EDIT) {
     			if (!et_Note.getText().toString().equals(mynotes.get(orig_pos).getNote()) && 
     					!et_Note.getText().toString().isEmpty()) {
-    				AlertDialog.Builder alert = new AlertDialog.Builder(this);
-    	    		alert.setMessage(R.string.str_back_pop);
-    	    		alert.setPositiveButton(R.string.str_btn_save, new DialogInterface.OnClickListener() {
+    				alert = new AlertDialog.Builder(this);
+    				alert.setMessage(R.string.str_back_pop);
+    				alert.setPositiveButton(R.string.str_btn_save, new DialogInterface.OnClickListener() {
     	    			public void onClick(DialogInterface dialog, int whichButton) {
-    	    				if (et_Note.getText().toString().isEmpty()) {
-    		    				showToast("Please type something");
-    			    			return;
-    			    		}
-    		    			db.updateNote(new MyNote(note_pos, et_Note.getText().toString()));
+    	    				db.updateNote(new MyNote(note_pos, et_Note.getText().toString()));
     		    			moveTaskToBack(true);
     	    			}
     	    		});
@@ -93,7 +155,7 @@ public class MainActivity extends Activity {
     	    			}
     	    		});
     	    		alert.show();
-    				EDIT_MODE = false;
+    				app_state = app_states.VIEW;
     			} else {
         			moveTaskToBack(true);
         		}
@@ -118,38 +180,35 @@ public class MainActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
 	    	case R.id.action_save:
-	    		if (selected && !EDIT_MODE && !et_Note.getText().toString().isEmpty()) {
+	    		if (app_state == app_states.SELECTED && !et_Note.getText().toString().isEmpty()) {
 	    			showToast("Nothing to save");
 	    			refreshNotes();
-	    			selected = false;
+	    			app_state = app_states.VIEW;
 	    			et_Note.setFocusableInTouchMode(true);
 	    			break;
 	    		}
-	    		if (EDIT_MODE) {	    			
+	    		if (app_state == app_states.EDIT) {	    			
 	    			if (et_Note.getText().toString().isEmpty()) {
 	    				showToast("Please type something");
 	    				et_Note.setFocusableInTouchMode(true);
 		    			break;
 		    		}
-	    			//note_pos = mynotes.get(note_pos).getID();
+	    			app_state = app_states.VIEW;
 	    			if (et_Note.getText().toString().equals(mynotes.get(orig_pos).getNote())) {
 	    				showToast("Nothing has changed");
 	    				refreshNotes();
 	    				et_Note.setText("");
-	    				EDIT_MODE = false;
 	    				et_Note.setFocusableInTouchMode(true);
 	    				break;
 	    			}
 	    			db.updateNote(new MyNote(note_pos, et_Note.getText().toString()));
-	    			EDIT_MODE = false;
 	    		} else {
 		    		if (et_Note.getText().toString().isEmpty()) {
 		    			showToast("Please type something");
 		    			et_Note.setFocusableInTouchMode(true);
 		    			break;
 		    		}
-		    		notes = db.getNotesCount();
-		    		note = new MyNote(notes+1, et_Note.getText().toString());
+		    		note = new MyNote(System.currentTimeMillis(), et_Note.getText().toString());
 		    		db.addNote(note);
 	    		}
 	    		showToast("Saved");
@@ -157,32 +216,33 @@ public class MainActivity extends Activity {
 	    		refreshNotes();
 	    		act_Edit.setVisible(false);
       		  	act_Delt.setVisible(false);
-      		  	selected = false;
+      		  	app_state = app_states.VIEW;	
       		  	et_Note.setFocusableInTouchMode(true);
+  			    hideSoftKeyboard(MainActivity.this, et_Note);
 	    		break;
 	    	case R.id.action_Edit:
-      		    EDIT_MODE = true;
-    			note_pos = mynotes.get(note_pos).getID();
+				app_state = app_states.EDIT;
       		    et_Note.setText(db.getNote(note_pos).getNote());
 	    		refreshNotes();
-	    		selected = false;
 	    		et_Note.setFocusableInTouchMode(true);
 	    		break;
 	    	case R.id.action_Delete:
-	    		AlertDialog.Builder alert = new AlertDialog.Builder(this);
+				app_state = app_states.DELETE;
+	    		alert = new AlertDialog.Builder(this);
 	    		alert.setMessage(R.string.str_delete_pop);
 	    		alert.setPositiveButton(R.string.str_btn_del, new DialogInterface.OnClickListener() {
 	    			public void onClick(DialogInterface dialog, int whichButton) {
-	    				note_pos = mynotes.get(note_pos).getID();
 	    				db.deleteNote(new MyNote(note_pos,et_Note.getText().toString()));
 	    				refreshNotes();
 	    	    		act_Edit.setVisible(false);
 	          		  	act_Delt.setVisible(false);
+	          		  	app_state = app_states.VIEW;
 	    			}
 	    		});
 	    		alert.setNegativeButton(R.string.str_btn_canc, new DialogInterface.OnClickListener() {
 	    			public void onClick(DialogInterface dialog, int whichButton) {
 	    				refreshNotes();
+						app_state = app_states.VIEW;
 	    			}
 	    		});
 	    		alert.show();
@@ -208,4 +268,9 @@ public class MainActivity extends Activity {
 		t = Toast.makeText(this, ToastText, Toast.LENGTH_SHORT);
 		t.show();
     }
+    
+    public static void hideSoftKeyboard (Activity activity, View view) {
+    	InputMethodManager imm = (InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+    	imm.hideSoftInputFromWindow(view.getApplicationWindowToken(), 0);
+	}
 }

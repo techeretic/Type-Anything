@@ -28,6 +28,6 @@
         android:layout_alignWithParentIfMissing="true"
         android:layout_below="@+id/et_Note"
         android:stackFromBottom="true"
-		android:transcriptMode="normal" />
+        android:transcriptMode="normal" />
 
 </RelativeLayout>

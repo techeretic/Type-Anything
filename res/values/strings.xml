@@ -12,5 +12,6 @@
     <string name="str_delete_pop">Delete the note??</string>
     <string name="str_back_pop">Changes present, do you want to save?</string>
     <string name="str_btn_save">Save</string>
+    <string name="str_new_pop">Do you want to save the note?</string>
 
 </resources>

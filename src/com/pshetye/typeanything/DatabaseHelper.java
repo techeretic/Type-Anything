@@ -63,7 +63,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	}
 	 
 	// Getting single contact
-	public MyNote getNote(int _id) {
+	public MyNote getNote(long _id) {
 		SQLiteDatabase db = this.getReadableDatabase();
 		 
 	    Cursor cursor = db.query(MYNOTES, new String[] { KEY_ID,

@@ -1,14 +1,14 @@
 package com.pshetye.typeanything;
 
 public class MyNote {
-	int _id;
+	long _id;
 	String pNote;
 	
 	public MyNote() {
 	
 	}
 	
-	public MyNote(int _id, String pNote) {
+	public MyNote(long _id, String pNote) {
 		this._id = _id;
 		this.pNote = pNote;
 	}
@@ -17,7 +17,7 @@ public class MyNote {
 		this.pNote = pNote;
 	}
 	
-	public int getID() {
+	public long getID() {
 		return this._id;
 	}
 	
@@ -25,7 +25,7 @@ public class MyNote {
 		return this.pNote;
 	}
 	
-	public void setID(int _id) {
+	public void setID(long _id) {
 		this._id = _id;
 	}
 	

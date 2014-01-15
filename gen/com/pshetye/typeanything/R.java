@@ -52,6 +52,7 @@ public final class R {
         public static final int str_btn_del=0x7f050006;
         public static final int str_btn_save=0x7f05000a;
         public static final int str_delete_pop=0x7f050008;
+        public static final int str_new_pop=0x7f05000b;
         public static final int type_hint=0x7f050003;
     }
     public static final class style {
