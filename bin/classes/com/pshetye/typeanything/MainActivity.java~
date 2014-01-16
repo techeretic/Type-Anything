@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -140,8 +139,8 @@ public class MainActivity extends Activity {
     	if (app_state == app_states.SELECTED) {
     		act_Edit.setVisible(false);
   		  	act_Delt.setVisible(false);
-        	act_Share.setVisible(false);
-        	act_Save.setVisible(true);
+        		  act_Share.setVisible(false);
+        		  act_Save.setVisible(true);
   		  	refreshNotes();
   		  	app_state = app_states.VIEW;
   		  	et_Note.setFocusableInTouchMode(true);
@@ -234,10 +233,6 @@ public class MainActivity extends Activity {
 	    		break;
 	    	case R.id.action_Edit:
 				app_state = app_states.EDIT;
-	    		act_Edit.setVisible(false);
-	  		  	act_Delt.setVisible(false);
-	        	act_Share.setVisible(false);
-	        	act_Save.setVisible(true);
       		    et_Note.setText(db.getNote(note_pos).getNote());
 	    		refreshNotes();
 	    		et_Note.setFocusableInTouchMode(true);
@@ -261,20 +256,9 @@ public class MainActivity extends Activity {
 	    			public void onClick(DialogInterface dialog, int whichButton) {
 	    				refreshNotes();
 						app_state = app_states.VIEW;
-	    	    		act_Edit.setVisible(false);
-	          		  	act_Delt.setVisible(false);
-	          		  	act_Share.setVisible(false);
-        		  		act_Save.setVisible(true);
 	    			}
 	    		});
 	    		alert.show();
-	    		break;
-	    	case R.id.action_Share:
-	    		Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
-	    	    sharingIntent.setType("text/plain");
-	    	    sharingIntent.putExtra(Intent.EXTRA_SUBJECT, "From - " + R.string.app_name);
-	    	    sharingIntent.putExtra(Intent.EXTRA_TEXT, db.getNote(note_pos).getNote());
-	    	    startActivity(Intent.createChooser(sharingIntent, "Choose option"));
 	    		break;
     	}
     	return true;

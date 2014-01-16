@@ -5,23 +5,28 @@
         android:orderInCategory="100"
         android:showAsAction="always"
         android:icon="@drawable/ic_menu_save"
-        android:title="@string/save_note"/>
+        android:title="@string/save_note" />
     
     <item
         android:id="@+id/action_Edit"
         android:orderInCategory="100"
         android:showAsAction="always"
         android:visible="false"
-        android:icon="@drawable/ic_menu_edit"
-        android:title="@string/save_note"/>
+        android:icon="@drawable/ic_menu_edit" />
     
     <item
         android:id="@+id/action_Delete"
         android:orderInCategory="100"
         android:showAsAction="always"
         android:visible="false"
-        android:icon="@drawable/ic_menu_delete"
-        android:title="@string/save_note"/>
+        android:icon="@drawable/ic_menu_delete" />
+    
+    <item
+        android:id="@+id/action_Share"
+        android:orderInCategory="100"
+        android:showAsAction="always"
+        android:visible="false"
+        android:icon="@drawable/ic_menu_share" />
     <!-- 
     <item
         android:id="@+id/action_manage"
