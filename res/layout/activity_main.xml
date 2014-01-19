@@ -13,13 +13,14 @@
         android:layout_height="0dp" 
         android:background="@android:color/transparent" 
         android:focusable="true" 
-        android:focusableInTouchMode="true"/>
+        android:focusableInTouchMode="true" />
         
 	<EditText 
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
+		android:textSize="20sp"
 		android:hint="@string/type_hint"
-		android:id="@+id/et_Note"/>
+		android:id="@+id/et_Note" />
         
     <ListView
         android:id="@+id/list"
@@ -27,7 +28,7 @@
         android:layout_height="wrap_content"
         android:layout_alignWithParentIfMissing="true"
         android:layout_below="@+id/et_Note"
-        android:stackFromBottom="true"
+        android:stackFromBottom="true" 
         android:transcriptMode="normal" />
 
 </RelativeLayout>

@@ -1,6 +1,8 @@
 package com.pshetye.typeanything;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import android.content.ContentValues;
@@ -12,7 +14,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 	
-	private static final int DATABASE_VERSION = 1;
+	private static final int DATABASE_VERSION = 2;
 	 
     // Database Name
     private static final String DATABASE_NAME = "MyNotes";
@@ -23,6 +25,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // Contacts Table Columns names
     private static final String KEY_ID = "id";
     private static final String KEY_NOTE = "pNote";
+    private static final String KEY_DATE = "pDate";
     
     private static int notes;
 
@@ -40,7 +43,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		String CREATE_CONTACTS_TABLE = "CREATE TABLE " + MYNOTES + "("
-                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NOTE + " TEXT" + ")";
+                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_NOTE + " TEXT, " 
+				+ KEY_DATE + " TEXT" + ")";
         db.execSQL(CREATE_CONTACTS_TABLE);
 	}
 
@@ -48,6 +52,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		// TODO Auto-generated method stub
 		System.out.print("Inside onUpgrade in DatabaseHelper");
+		
+		if (oldVersion < newVersion) {
+			if (newVersion == 2) {
+				db.execSQL("ALTER TABLE " + MYNOTES + " ADD COLUMN " + KEY_DATE
+						+ " TEXT");
+				if (MyNote.NoteDateFormat == null)
+					MyNote.NoteDateFormat = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
+				ContentValues values = new ContentValues();
+
+			    values.put(KEY_DATE, MyNote.NoteDateFormat.format(new Date()));
+			 
+			    // updating row
+			    db.update(MYNOTES, values, "", null);
+			}
+		}
 	}
 
 	// Adding new contact
@@ -56,6 +75,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		 
 	    ContentValues values = new ContentValues();
 	    values.put(KEY_NOTE, note.getNote()); // Contact Name
+	    values.put(KEY_ID, note.getID()); // Contact Name
+	    values.put(KEY_DATE, note.getDate()); // Contact Name
 	 
 	    // Inserting Row
 	    db.insert(MYNOTES, null, values);
@@ -83,7 +104,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		List<MyNote> noteList = new ArrayList<MyNote>();
 		String selectQuery = "SELECT  * FROM " + MYNOTES;
 		
-		Cursor cursor = db.rawQuery(selectQuery, null);
+		Cursor cursor = db.rawQuery(selectQuery, null);        
 		
 		// looping through all rows and adding to list
 	    if (cursor.moveToFirst()) {
@@ -91,6 +112,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	            MyNote note = new MyNote();
 	            note.setID(Integer.parseInt(cursor.getString(0)));
 	            note.setPNote(cursor.getString(1));
+	            note.setDate(cursor.getString(2));
 	            // Adding contact to list
 	            noteList.add(note);
 	        } while (cursor.moveToNext());
@@ -137,6 +159,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		 
 	    ContentValues values = new ContentValues();
 	    values.put(KEY_NOTE, note.getNote());
+	    values.put(KEY_DATE, MyNote.NoteDateFormat.format(new Date()));
 	 
 	    // updating row
 	    return db.update(MYNOTES, values, KEY_ID + " = ?",

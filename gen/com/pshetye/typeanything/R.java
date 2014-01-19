@@ -30,15 +30,18 @@ public final class R {
         public static final int ic_menu_share=0x7f020006;
     }
     public static final class id {
-        public static final int action_Delete=0x7f080004;
-        public static final int action_Edit=0x7f080003;
-        public static final int action_Share=0x7f080005;
-        public static final int action_save=0x7f080002;
+        public static final int action_Delete=0x7f080006;
+        public static final int action_Edit=0x7f080005;
+        public static final int action_Share=0x7f080007;
+        public static final int action_save=0x7f080004;
         public static final int et_Note=0x7f080000;
         public static final int list=0x7f080001;
+        public static final int theDate=0x7f080003;
+        public static final int theNote=0x7f080002;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;
+        public static final int listview=0x7f030001;
     }
     public static final class menu {
         public static final int main=0x7f070000;
