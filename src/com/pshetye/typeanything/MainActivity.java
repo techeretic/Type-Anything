@@ -32,8 +32,7 @@ public class MainActivity extends Activity {
 	List<MyNote> notes;
 	EditText et_Note;
 	ListView listview;
-	TextView title;
-	TextView description;
+	TextView title, description;
 	Toast t;
 	MenuItem act_Save, act_Edit, act_Delt, act_Share;
 	public static int orig_pos;
@@ -74,16 +73,8 @@ public class MainActivity extends Activity {
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 				if (app_state == app_states.SELECTED) {
-		    		act_Edit.setVisible(false);
-		  		  	act_Delt.setVisible(false);
-		        	act_Share.setVisible(false);
-		        	act_Save.setVisible(true);
-		  		  	if (title != null)
-		  		  		title.setBackgroundColor(Color.TRANSPARENT);
-		  		  	if (description != null)
-		  		  		description.setBackgroundColor(Color.TRANSPARENT);
-		  		  	title = null;
-		  		  	description = null;
+					changeMenuBtnVisibility(false);
+					setSelectionTransparent();
 		  		  	et_Note.setFocusableInTouchMode(true);
 		  		  	showSoftKeyboard(MainActivity.this, v);
 				}
@@ -96,10 +87,7 @@ public class MainActivity extends Activity {
         listview.setOnItemClickListener(new OnItemClickListener() {
         	  @Override
         	  public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        		  if (title != null)
-        			  title.setBackgroundColor(Color.TRANSPARENT);
-        		  if (description != null)
-        			  description.setBackgroundColor(Color.TRANSPARENT);
+        		  setSelectionTransparent();
 		  		  	
         		  title = (TextView) view.findViewById(R.id.theNote);
  				  description = (TextView) view.findViewById(R.id.theDate); 
@@ -135,35 +123,38 @@ public class MainActivity extends Activity {
         				  showToast("Please type something");
 	    				  et_Note.setFocusableInTouchMode(true);
         			  } else {
-	        			  alert = new AlertDialog.Builder(MainActivity.this);
-	        			  alert.setMessage(R.string.str_new_pop);
-	      				  alert.setPositiveButton(R.string.str_btn_save, new DialogInterface.OnClickListener() {
-	      					  public void onClick(DialogInterface dialog, int whichButton) {
-	      						  db.updateNote(new MyNote(note_pos, et_Note.getText().toString()));
-	      						  showToast("Updated");
-	      						  et_Note.setText("");
-	      						  refreshNotes();
-	      		        		  note_pos = mynotes.get(orig_pos).getID();
-	      					  }
-	      				  });
-	      				  alert.setNegativeButton(R.string.str_btn_canc, new DialogInterface.OnClickListener() {
-	      					  public void onClick(DialogInterface dialog, int whichButton) {
-	      		        		  note_pos = mynotes.get(orig_pos).getID();  
-	      						  et_Note.setText("");
-	      						  refreshNotes();    						  
-	      					  }
-	      				  });
-	      				  alert.show(); 
+        				  if (et_Note.getText().toString().equals(db.getNote(note_pos).getNote())) {
+        					  note_pos = mynotes.get(orig_pos).getID();
+        					  et_Note.setText("");
+    	    				  app_state = app_states.SELECTED;
+        				  } else {
+		        			  alert = new AlertDialog.Builder(MainActivity.this);
+		        			  alert.setMessage(R.string.str_new_pop);
+		      				  alert.setPositiveButton(R.string.str_btn_save, new DialogInterface.OnClickListener() {
+		      					  public void onClick(DialogInterface dialog, int whichButton) {
+		      						  db.updateNote(new MyNote(note_pos, et_Note.getText().toString()));
+		      						  showToast("Updated");
+		      						  et_Note.setText("");
+		      						  refreshNotes();
+		      		        		  note_pos = mynotes.get(orig_pos).getID();
+		      					  }
+		      				  });
+		      				  alert.setNegativeButton(R.string.str_btn_canc, new DialogInterface.OnClickListener() {
+		      					  public void onClick(DialogInterface dialog, int whichButton) {
+		      		        		  note_pos = mynotes.get(orig_pos).getID();  
+		      						  et_Note.setText(mynotes.get(orig_pos).getNote());
+		      						  refreshNotes();    						  
+		      					  }
+		      				  });
+		      				  alert.show(); 
+        				  }
         			  }
         		  } else {
         			  app_state = app_states.SELECTED;
         			  hideSoftKeyboard(MainActivity.this, view);
         			  note_pos = mynotes.get(orig_pos).getID();
         		  }
-        		  act_Edit.setVisible(true);
-        		  act_Delt.setVisible(true);
-        		  act_Share.setVisible(true);
-        		  act_Save.setVisible(false);
+        		  changeMenuBtnVisibility(true);
         		  et_Note.setFocusableInTouchMode(false);
         	  }
         });
@@ -180,19 +171,11 @@ public class MainActivity extends Activity {
     
     public void onBackPressed(){
     	if (app_state == app_states.SELECTED) {
-    		act_Edit.setVisible(false);
-  		  	act_Delt.setVisible(false);
-        	act_Share.setVisible(false);
-        	act_Save.setVisible(true);
+    		changeMenuBtnVisibility(false);
   		  	refreshNotes();
   		  	app_state = app_states.VIEW;
   		  	et_Note.setFocusableInTouchMode(true);
-  		  	if (title != null)
-  		  		title.setBackgroundColor(Color.TRANSPARENT);
-  		  	if (description != null)
-  		  		description.setBackgroundColor(Color.TRANSPARENT);
-  		  	title = null;
-  		  	description = null;
+  		  	setSelectionTransparent();
     	} else {
     		if (app_state == app_states.EDIT) {
     			if (!et_Note.getText().toString().equals(mynotes.get(orig_pos).getNote()) && 
@@ -211,23 +194,13 @@ public class MainActivity extends Activity {
     	    			}
     	    		});
     	    		alert.show();
-    	  		  	if (title != null)
-    	  		  		title.setBackgroundColor(Color.TRANSPARENT);
-    	  		  	if (description != null)
-    	  		  		description.setBackgroundColor(Color.TRANSPARENT);
-    	  		  	title = null;
-    	  		  	description = null;
+    	    		setSelectionTransparent();
     				app_state = app_states.VIEW;
     			} else {
         			moveTaskToBack(true);
         		}
     		} else {
-      		  	if (title != null)
-      		  		title.setBackgroundColor(Color.TRANSPARENT);
-      		  	if (description != null)
-      		  		description.setBackgroundColor(Color.TRANSPARENT);
-      		  	title = null;
-      		  	description = null;
+    			setSelectionTransparent();
     			moveTaskToBack(true);
     		}
     	}
@@ -285,23 +258,17 @@ public class MainActivity extends Activity {
 	    		showToast("Saved");
 		    	et_Note.setText("");
 	    		refreshNotes();
-	    		act_Edit.setVisible(false);
-      		  	act_Delt.setVisible(false);
-      		  	act_Share.setVisible(false);
-        		act_Save.setVisible(true);
+	    		changeMenuBtnVisibility(false);
       		  	app_state = app_states.VIEW;	
       		  	et_Note.setFocusableInTouchMode(true);
   			    hideSoftKeyboard(MainActivity.this, et_Note);
 	    		break;
 	    	case R.id.action_Edit:
-				app_state = app_states.EDIT;
-	    		act_Edit.setVisible(false);
-	  		  	act_Delt.setVisible(false);
-	        	act_Share.setVisible(false);
-	        	act_Save.setVisible(true);
+	    		changeMenuBtnVisibility(false);
       		    et_Note.setText(db.getNote(note_pos).getNote());
 	    		refreshNotes();
 	    		et_Note.setFocusableInTouchMode(true);
+	    		app_state = app_states.EDIT;
 	    		break;
 	    	case R.id.action_Delete:
 	    		et_Note.setFocusableInTouchMode(true);
@@ -312,10 +279,7 @@ public class MainActivity extends Activity {
 	    			public void onClick(DialogInterface dialog, int whichButton) {
 	    				db.deleteNote(new MyNote(note_pos,et_Note.getText().toString()));
 	    				refreshNotes();
-	    	    		act_Edit.setVisible(false);
-	          		  	act_Delt.setVisible(false);
-	          		  	act_Share.setVisible(false);
-        		  		act_Save.setVisible(true);
+	    				changeMenuBtnVisibility(false);
 	          		  	app_state = app_states.VIEW;
 	    			}
 	    		});
@@ -323,10 +287,7 @@ public class MainActivity extends Activity {
 	    			public void onClick(DialogInterface dialog, int whichButton) {
 	    				refreshNotes();
 						app_state = app_states.VIEW;
-	    	    		act_Edit.setVisible(false);
-	          		  	act_Delt.setVisible(false);
-	          		  	act_Share.setVisible(false);
-        		  		act_Save.setVisible(true);
+						changeMenuBtnVisibility(false);
 	    			}
 	    		});
 	    		alert.show();
@@ -343,12 +304,7 @@ public class MainActivity extends Activity {
     }
     
     private void refreshNotes() {
-	  	if (title != null)
-	  		title.setBackgroundColor(Color.TRANSPARENT);
-	  	if (description != null)
-	  		description.setBackgroundColor(Color.TRANSPARENT);
-	  	title = null;
-	  	description = null;
+    	setSelectionTransparent();
     	
     	List<MyNote> notes = db.getAllNotes();
     	    	
@@ -381,6 +337,22 @@ public class MainActivity extends Activity {
     	InputMethodManager imm = (InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
     	imm.showSoftInput(view, 0);
 	}
+    
+    private void changeMenuBtnVisibility(boolean visibility) {
+		  act_Edit.setVisible(visibility);
+		  act_Delt.setVisible(visibility);
+		  act_Share.setVisible(visibility);
+		  act_Save.setVisible(!visibility);
+    }
+    
+    private void setSelectionTransparent() {
+	  	if (title != null)
+	  		title.setBackgroundColor(Color.TRANSPARENT);
+	  	if (description != null)
+	  		description.setBackgroundColor(Color.TRANSPARENT);
+	  	title = null;
+	  	description = null;    	
+    }
     
     private class MyListAdapter extends ArrayAdapter<MyNote> {
 		 private List<MyNote> notes;
