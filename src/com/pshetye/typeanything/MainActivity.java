@@ -1,14 +1,20 @@
 package com.pshetye.typeanything;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,13 +40,14 @@ public class MainActivity extends Activity {
 	ListView listview;
 	TextView title, description;
 	Toast t;
-	MenuItem act_Save, act_Edit, act_Delt, act_Share;
+	MenuItem act_Save, act_Edit, act_Delt, act_Share, act_Exp;
 	public static int orig_pos;
 	public static long old_pos, note_pos;
 	public static enum app_states{VIEW, EDIT, DELETE, NEW, SELECTED};
 	public static app_states app_state;
 	List<MyNote> mynotes;
 	MyListAdapter myladapter;
+	ProgressDialog progressDialog;
 	
 	public static boolean doDelete;
 
@@ -215,6 +222,7 @@ public class MainActivity extends Activity {
         act_Delt = menu.findItem(R.id.action_Delete);
         act_Share = menu.findItem(R.id.action_Share);
         act_Save = menu.findItem(R.id.action_save);
+        act_Exp = menu.findItem(R.id.action_Export);
         
         return true;
     }
@@ -299,6 +307,9 @@ public class MainActivity extends Activity {
 	    	    sharingIntent.putExtra(Intent.EXTRA_TEXT, db.getNote(note_pos).getNote());
 	    	    startActivity(Intent.createChooser(sharingIntent, "Choose option"));
 	    		break;
+	    	case R.id.action_Export:
+	    		new ExportNotes().execute();
+	    		break;
     	}
     	return true;
     }
@@ -343,6 +354,7 @@ public class MainActivity extends Activity {
 		  act_Delt.setVisible(visibility);
 		  act_Share.setVisible(visibility);
 		  act_Save.setVisible(!visibility);
+		  act_Exp.setVisible(!visibility);
     }
     
     private void setSelectionTransparent() {
@@ -388,4 +400,61 @@ public class MainActivity extends Activity {
 			 return v;
 		 }
 	}
+    
+    private class ExportNotes extends AsyncTask<Void, Void, Void> {
+    	
+    	List<MyNote> mynotes;
+    	
+    	@Override
+    	protected void onPreExecute() {
+    		// TODO Auto-generated method stub
+    		super.onPreExecute();
+            progressDialog = new ProgressDialog(MainActivity.this);
+            progressDialog.setMessage("Loading...");
+            progressDialog.setCancelable(false);
+            progressDialog.show();
+    		
+    		mynotes = db.getAllNotes();
+    	}
+
+		@Override
+		protected Void doInBackground(Void... params) {
+			// TODO Auto-generated method stub	
+			if (mynotes != null) {
+				for (MyNote note : mynotes) {
+					generateNoteOnSD(note.getDate().replaceAll("/", "-").replaceAll(" ", "-") + ".txt",note.getNote());
+				}
+			}
+			return null;
+		}
+		
+		@Override
+		protected void onPostExecute(Void result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			progressDialog.dismiss();
+			showToast("Saved to /sdcard/TypeAnything-Notes/");
+		}
+		
+		private void generateNoteOnSD(String sFileName, String sBody){
+		    try
+		    {
+		        File root = new File(Environment.getExternalStorageDirectory(), "TypeAnything-Notes");
+		        if (!root.exists()) {
+		            root.mkdirs();
+		        }
+		        File gpxfile = new File(root, sFileName);
+		        if (!gpxfile.exists()) {
+			        FileWriter writer = new FileWriter(gpxfile);
+			        writer.append(sBody);
+			        writer.flush();
+			        writer.close();
+		        }
+		    }
+		    catch(IOException e)
+		    {
+		         e.printStackTrace();
+		    }
+		}
+    }
 }

@@ -27,6 +27,14 @@
         android:showAsAction="always"
         android:visible="false"
         android:icon="@drawable/ic_menu_share" />
+    
+    <item
+        android:id="@+id/action_Export"
+        android:orderInCategory="100"
+        android:showAsAction="always"
+        android:visible="true"
+        android:title="@string/str_export_notes"
+        android:icon="@drawable/ic_menu_copy" />
     <!-- 
     <item
         android:id="@+id/action_manage"
